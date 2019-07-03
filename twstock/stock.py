@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import time
+from tqdm import tqdm
 import datetime
 import urllib.parse
 from collections import namedtuple
@@ -28,7 +30,7 @@ TWSE_BASE_URL = 'http://www.twse.com.tw/'
 TPEX_BASE_URL = 'http://www.tpex.org.tw/'
 DATATUPLE = namedtuple('Data', ['date', 'capacity', 'turnover', 'open',
                                 'high', 'low', 'close', 'change', 'transaction'])
-
+SLEEP = 5/3
 
 class BaseFetcher(object):
     def fetch(self, year, month, sid, retry):
@@ -55,6 +57,7 @@ class TWSEFetcher(BaseFetcher):
     def fetch(self, year: int, month: int, sid: str, retry: int=5):
         params = {'date': '%d%02d01' % (year, month), 'stockNo': sid}
         for retry_i in range(retry):
+            time.sleep(SLEEP)
             r = requests.get(self.REPORT_URL, params=params,
                              proxies=get_proxies())
             try:
@@ -102,6 +105,7 @@ class TPEXFetcher(BaseFetcher):
     def fetch(self, year: int, month: int, sid: str, retry: int=5):
         params = {'d': '%d/%d' % (year - 1911, month), 'stkno': sid}
         for retry_i in range(retry):
+            time.sleep(SLEEP)
             r = requests.get(self.REPORT_URL, params=params,
                              proxies=get_proxies())
             try:
@@ -156,7 +160,7 @@ class Stock(analytics.Analytics):
     def _month_year_iter(self, start_month, start_year, end_month, end_year):
         ym_start = 12 * start_year + start_month - 1
         ym_end = 12 * end_year + end_month
-        for ym in range(ym_start, ym_end):
+        for ym in tqdm(range(ym_start, ym_end)):
             y, m = divmod(ym, 12)
             yield y, m + 1
 
